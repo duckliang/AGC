@@ -1,0 +1,188 @@
+C51 COMPILER V8.02   UARTTEST                                                              07/19/2016 17:19:52 PAGE 1   
+
+
+C51 COMPILER V8.02, COMPILATION OF MODULE UARTTEST
+OBJECT MODULE PLACED IN .\object\UARTtest.obj
+COMPILER INVOKED BY: E:\keil uvision3\C51\BIN\C51.EXE ..\UARTtest.c LARGE BROWSE DEBUG OBJECTEXTEND OBJECT(.\object\UART
+                    -test.obj)
+
+line level    source
+
+   1          #include <STC12C5A60S2.H>
+   2          #include "UART.h"
+   3          #include "timer.h"
+   4          #include<intrins.h>                                       //nop延时头文件，在延时函数中用到，调用一个_nop_()代表延时1us。
+   5          #include "serial2.c"
+*** WARNING C280 IN LINE 178 OF ..\SERIAL2.C: 'legg': unreferenced local variable
+   6          unsigned char targetN=0,startN,listN;
+   7          volatile unsigned char sending,taking;
+   8          unsigned char    ZZ=0X01,tt=0;
+   9          unsigned char    xintiao[Rs232_Output_LEN]= {0XFA,0X00,0X1C,0X00,0X00,0X01,0X00,0X00,0X00,0X00,0X00,0X00,0
+             -X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0XEA};
+  10          unsigned char   lianxian1[Rs232_Output_LEN]={0xFA,0x01,0x1C,0x00,0x01,0x01,0x01,0x00,0x00,0x00,0x00,0x00,0
+             -x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xE7};
+  11          unsigned char   lianxian2[Rs232_Output_LEN]={0xFA,0x02,0x1C,0x00,0x01,0x01,0x01,0x00,0x00,0x00,0x00,0x00,0
+             -x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xE6};
+  12          unsigned char renwuxiada[Rs232_Output_LEN]= {0XFA,0X01,0X1C,0X00,0X02,0X01,0X0B,0X0C,0X01,0X00,0X00,0X00,0
+             -X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X01,0X00,0X00,0X00,0X00,0X00,0X00,0X7B};
+  13          unsigned char renwuqidon[Rs232_Output_LEN]= {0XFA,0X01,0X1C,0X00,0X02,0X01,0X0B,0X0C,0X01,0X00,0X00,0X00,0
+             -X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X03,0X00,0X00,0X00,0X00,0X00,0X00,0X63};
+  14          unsigned char      qidon[Rs232_Output_LEN]= {0XFA,0X01,0X1C,0X00,0X03,0X01,0X00,0X80,0X00,0X00,0X00,0X00,0
+             -X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00};
+  15          unsigned char     qidon1[Rs232_Output_LEN]= {0XFA,0X01,0X1C,0X00,0X03,0X01,0X01,0X80,0X00,0X00,0X00,0X00,0
+             -X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00};
+  16          unsigned char     qidon2[Rs232_Output_LEN]= {0XFA,0X02,0X1C,0X00,0X03,0X01,0X01,0X80,0X00,0X00,0X00,0X00,0
+             -X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00};
+  17          unsigned char    tingzhi[Rs232_Output_LEN]= {0XFA,0X01,0X1C,0X00,0X03,0X01,0X01,0X00,0X00,0X00,0X00,0X00,0
+             -X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00};
+  18          sbit led0=P1^0;
+  19          sbit led1=P1^1;
+  20          void aim_array(uchar w1,uchar w2,uchar w3,uchar w4)
+  21          { 
+  22   1         renwuxiada[6]=w1;
+  23   1         renwuqidon[6]=w1;
+  24   1         renwuxiada[7]=w2;
+  25   1         renwuqidon[7]=w2;
+  26   1         renwuxiada[8]=w3;
+  27   1         renwuqidon[8]=w3;
+  28   1         renwuxiada[9]=w4;
+  29   1         renwuqidon[9]=w4;
+  30   1      }
+  31          void delay(unsigned int i)
+  32          {
+  33   1              unsigned char j,k;
+  34   1              for(j=i;j>0;j--)
+  35   1                      for(k=255;k>0;k--);
+  36   1      }
+  37          void NVIC_init(viod)
+  38          {
+  39   1      IP=0X00;
+  40   1      IPH=0X10;
+  41   1      IP2=0X01;
+  42   1      IPH2=0X00;
+  43   1      }
+  44          void main()
+C51 COMPILER V8.02   UARTTEST                                                              07/19/2016 17:19:52 PAGE 2   
+
+  45          {       NVIC_init();
+*** WARNING C209 IN LINE 45 OF ..\UARTTEST.C: '_NVIC_init': too few actual parameters
+  46   1              Timer0Init();
+  47   1              UARTinit();
+  48   1          init_uart();                                 
+  49   1              while(1)
+  50   1              {        
+  51   2              if(P0!=0XFF||P2!=0XFF||led0==0)
+  52   2                {
+  53   3                          led1=0;
+  54   3                        }
+  55   2                        else 
+  56   2                        {led1=1;}
+  57   2               if (Rs232_Flag)
+  58   2                {  
+  59   3                               Rs232_Flag = 0;
+  60   3                                        if(Rs_buf1[6]==1)
+  61   3                                        {targetN=1;}
+  62   3                                        else if(Rs_buf2[6]==1)
+  63   3                                        {targetN=2;}
+  64   3      
+  65   3                                        if((Rs_buf1[7]==0x30)||(Rs_buf1[7]==0x31));
+  66   3                                        else if((Rs_buf1[7]==0x10)||(Rs_buf1[7]==0x11));
+  67   3                                        else
+  68   3                                        {
+  69   4                                                        if(Rs_buf1[9]!=0)//1号车管制
+  70   4                                                       {
+  71   5                                                              if(Rs_buf2[9]==0){qidon1[6]=Rs_buf1[9];UARTsendc1(qidon1);}
+  72   5                                                              else
+  73   5                                                              {
+  74   6                                                                if(Rs_buf1[9]!=Rs_buf2[9])
+  75   6                                                                {qidon1[6]=Rs_buf1[9];UARTsendc1(qidon1);}
+  76   6                                                              }                        
+  77   5                                                       }                                              
+  78   4                            }
+  79   3      
+  80   3                                        if((Rs_buf2[7]==0x30)||(Rs_buf2[7]==0x31));
+  81   3                                        else if((Rs_buf2[7]==0x10)||(Rs_buf2[7]==0x11));
+  82   3                                        else
+  83   3                                        {
+  84   4                                                       if(Rs_buf2[9]!=0)//2号车管制
+  85   4                                                       {
+  86   5                                                              if(Rs_buf1[9]==0){qidon2[6]=Rs_buf2[9];UARTsendc1(qidon2);}
+  87   5                                                              else
+  88   5                                                              {
+  89   6                                                                if(Rs_buf2[9]!=Rs_buf1[9])
+  90   6                                                                {qidon2[6]=Rs_buf2[9];UARTsendc1(qidon2);}
+  91   6                                                      }                         
+  92   5                                               }
+  93   4                                 }
+  94   3                              }
+  95   2                               
+  96   2                 while(flag_finish)              //当接收完成时
+  97   2                 {
+  98   3                         command();                      //识别相应的功能码
+  99   3                         flag_finish=0;                  //重新接收   
+ 100   3                 }
+ 101   2                 if(sign!=0)
+ 102   2                 {
+ 103   3                        switch(sign)
+ 104   3                                 {
+ 105   4                                   case 1: aim_array(2,11,12,1);  break;
+C51 COMPILER V8.02   UARTTEST                                                              07/19/2016 17:19:52 PAGE 3   
+
+ 106   4                                       case 2: aim_array(3,11,12,1);  break;
+ 107   4                                       case 3: aim_array(4,11,12,1);  break;
+ 108   4                                       case 4: aim_array(2,11,12,1);  break;
+ 109   4                                       case 5: aim_array(3,11,12,1);  break;
+ 110   4                                       case 6: aim_array(4,11,12,1);  break;
+ 111   4                                       case 7: aim_array(5,11,12,1);  break;
+ 112   4                                       case 8: aim_array(6,11,12,1);  break;
+ 113   4                                       case 9: aim_array(7,11,12,1);  break;
+ 114   4                                       case 10: aim_array(5,11,12,1);  break;
+ 115   4                                       case 11: aim_array(6,11,12,1);  break;
+ 116   4                                       case 12: aim_array(7,11,12,1);  break;
+ 117   4                                       case 13: aim_array(8,11,12,1);  break;
+ 118   4                                       case 14: aim_array(9,11,12,1);  break;
+ 119   4                                       case 15: aim_array(10,11,12,1);  break;
+ 120   4                                       case 16: aim_array(9,11,12,1);  break;
+ 121   4                                       case 17: aim_array(10,11,12,1);  break;
+ 122   4                                 }
+ 123   3                                      sign=0; 
+ 124   3                                      UARTsendc(renwuxiada);
+ 125   3                                                                      delay_ms(500);  
+ 126   3                                      UARTsendc(renwuqidon);  
+ 127   3                                                      delay_ms(500);  
+ 128   3                                      UARTsendc(renwuxiada);
+ 129   3                                                                      delay_ms(500);  
+ 130   3                                      UARTsendc(renwuqidon);            
+ 131   3                  }
+ 132   2                
+ 133   2                
+ 134   2              }
+ 135   1      }
+ 136          void tm0_isr() interrupt 1      //中断服务部分
+ 137          {
+ 138   1          TL0 =(65536-(Time0*Fosc/12000000))%256;                     //reload timer0 low byte
+ 139   1          TH0 =(65536-(Time0*Fosc/12000000))/256;                //reload timer0 high byte
+ 140   1              tt++;
+ 141   1                      if(tt==10)
+ 142   1              {
+ 143   2              tt=0;
+ 144   2              UARTsendc(xintiao);
+ 145   2              UARTsendc1(lianxian1);
+ 146   2              UARTsendc1(lianxian2);
+ 147   2              }
+ 148   1      }
+ 149          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1748    ----
+   CONSTANT SIZE    =    512    ----
+   XDATA SIZE       =    271      21
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =     76    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  2 WARNING(S),  0 ERROR(S)

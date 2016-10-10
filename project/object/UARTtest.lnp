@@ -1,0 +1,6 @@
+".\object\STARTUP.obj",
+".\object\UART.obj",
+".\object\UARTtest.obj",
+".\object\timer.obj" 
+TO ".\object\UARTtest" 
+PRINT(".\UARTtest.m51") RAMSIZE(256) 

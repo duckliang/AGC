@@ -1,0 +1,167 @@
+C51 COMPILER V8.02   UART                                                                  06/15/2016 23:17:42 PAGE 1   
+
+
+C51 COMPILER V8.02, COMPILATION OF MODULE UART
+OBJECT MODULE PLACED IN .\object\UART.obj
+COMPILER INVOKED BY: E:\keil uvision3\C51\BIN\C51.EXE ..\UART.c LARGE BROWSE DEBUG OBJECTEXTEND OBJECT(.\object\UART.obj
+                    -)
+
+line level    source
+
+   1          #include "UART.h"
+   2          bit Rs232_Rece_Error,Start_Rxd,Rs232_Flag;
+   3          unsigned char  Rs_buf[Rs232_Input_LEN],Rs_buf1[Rs232_Input_LEN],Rs_buf2[Rs232_Input_LEN],g_cReceNum,buf_nu
+             -m=0;
+   4          unsigned int   Rs_bufsum=0;
+   5          void UARTinit(void)                             //串口初始化
+   6          {
+   7   1       EA=0;          //暂时关闭中断
+   8   1       TMOD&=0x0F;    //定时器1模式控制在高4位
+   9   1       TMOD|=0x20;    //定时器1工作在模式2，自动重装模式
+  10   1       SCON=0x50;     //串口工作在模式1
+  11   1       TH1=256-FOSC/(Baud*12*16);  //计算定时器重装值
+  12   1       TL1=256-FOSC/(Baud*12*16);
+  13   1       PCON|=0x80;    //串口波特率加倍   PCON=0x00;波特率不倍增
+  14   1       ES=1;          //串行中断允许
+  15   1       TR1=1;         //启动定时器1
+  16   1       REN=1;         //允许接收 
+  17   1       EA=1;          //允许中断
+  18   1      }
+  19          void UARTsend(unsigned char d)            //发送一个字节的数据，形参d即为待发送数据。
+  20          {
+  21   1       SBUF=d; //将数据写入到串口缓冲
+  22   1       sending=1;      //设置发送标志
+  23   1       while(sending); //等待发送完毕
+  24   1      }
+  25          void UARTsendc(unsigned char * str)
+  26          {               
+  27   1          int i;  
+  28   1              if(str!=xintiao)
+  29   1              { 
+  30   2              str[TX_NUM]=ZZ++;
+  31   2              if(str[TX_NUM]==0){str[TX_NUM]=1;}
+  32   2              str[TX_CRC]=Tx_CRC(str);
+  33   2              str[target]=targetN;
+  34   2              }
+  35   1              for(i=0;i<28;i++)
+  36   1              {
+  37   2                      UARTsend(str[i]);
+  38   2              }
+  39   1      }
+  40          void UARTsendc1(unsigned char * str)
+  41          {
+  42   1         int i;
+  43   1         str[TX_NUM]=ZZ++;
+  44   1         if(str[TX_NUM]==0){str[TX_NUM]=1;}
+  45   1         str[TX_CRC]=Tx_CRC(str);
+  46   1              for(i=0;i<28;i++)
+  47   1              {
+  48   2                      UARTsend(str[i]);
+  49   2              }
+  50   1      
+  51   1      }
+  52          
+  53          
+C51 COMPILER V8.02   UART                                                                  06/15/2016 23:17:42 PAGE 2   
+
+  54          /********************************************/
+  55          /****接收以一定的数据为结束标志的不定接收****/
+  56          /********************************************/
+  57          void RS232(void) interrupt 4   using 2
+  58          {   
+  59   1         if(RI)
+  60   1         {  
+  61   2            unsigned char Rece_data = SBUF;  
+  62   2                
+  63   2                 ES                     = False;  
+  64   2             RI                     = 0;
+  65   2                        if (Start_Rxd) 
+  66   2                        {
+  67   3                                   g_cReceNum ++;                      
+  68   3                                       if ((g_cReceNum == (Rs232_Input_LEN-1))) 
+  69   3                                       {
+  70   4                                             if(Rece_data==Rx_end_data)
+  71   4                                                 { 
+  72   5                                                           Rs_buf[g_cReceNum] = Rece_data;
+  73   5                                                               Start_Rxd = False;
+  74   5                                                               Rs232_Flag = True;
+  75   5                                                           g_cReceNum = 0;
+  76   5                                                               goto Rs232_end ;
+  77   5                                                              }
+  78   4                                       }
+  79   3                                       if(g_cReceNum==2)
+  80   3                                       {
+  81   4                                              if(Rece_data==1)
+  82   4                                              {buf_num=1;}
+  83   4                                              if(Rece_data==2)
+  84   4                                              {buf_num=2;}                             
+  85   4                                       }
+  86   3                           if (g_cReceNum<(Rs232_Input_LEN-1))
+  87   3                                       {
+  88   4                                               Rs_buf[g_cReceNum] = Rece_data;
+  89   4                                               if(buf_num==1)Rs_buf1[g_cReceNum] = Rece_data;
+  90   4                                           if(buf_num==2)Rs_buf2[g_cReceNum] = Rece_data;  
+  91   4                                       }
+  92   3                                         else 
+  93   3                                       {
+  94   4                                               
+  95   4                                                        g_cReceNum = 0;
+  96   4                                                        Rs232_Rece_Error = True;
+  97   4                                                        Start_Rxd = False;
+  98   4                                       }                                                                                                      
+  99   3              
+ 100   3                              } 
+ 101   2                        else
+ 102   2                    {        
+ 103   3                             if (Rece_data == Rx_start_data)
+ 104   3                         {    
+ 105   4                                       Start_Rxd = True;
+ 106   4                               g_cReceNum = 0;
+ 107   4                               Rs_buf[g_cReceNum]  = Rece_data;
+ 108   4                         }          
+ 109   3              
+ 110   3                     }
+ 111   2              
+ 112   2                      Rs232_end:                          
+ 113   2                     ES = True;
+ 114   2              }
+ 115   1              else      //发送完一字节数据
+C51 COMPILER V8.02   UART                                                                  06/15/2016 23:17:42 PAGE 3   
+
+ 116   1              {
+ 117   2                TI=0;
+ 118   2                sending=0;  //清正在发送标志
+ 119   2              }
+ 120   1      }
+ 121          unsigned char Rx_CRC()
+ 122          {
+ 123   1       unsigned int Rx_data=0,k;
+ 124   1       for( k=0;k<(Rs232_Input_LEN-1);k++){Rx_data += Rs_buf[k];}
+ 125   1       Rx_data=Rx_data&0x00FF;
+ 126   1       Rx_data=(unsigned char)(~Rx_data+1);
+ 127   1       return Rx_data;
+ 128   1      }
+ 129          unsigned char Tx_CRC(unsigned char Txarray[Rs232_Output_LEN])
+ 130          {
+ 131   1       unsigned int Tx_data=0,k;
+ 132   1       for( k=0;k<(Rs232_Output_LEN-1);k++){Tx_data += Txarray[k];}
+ 133   1       Tx_data=Tx_data&0x00FF;
+ 134   1       Tx_data=(unsigned char)(~Tx_data+1);
+ 135   1       return Tx_data;
+ 136   1      }
+ 137                    
+ 138          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    682    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     52      12
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      3    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
